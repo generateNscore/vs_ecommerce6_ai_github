@@ -111,4 +111,4 @@ Interactive FastAPI documentation for testing all endpoints.
 MIT License - free for personal and commercial use.
 
 Made to be cloned and run instantly. If you get the same screen as `screen.jpg`, setup succeeded.
-![Preview](screen.jpg)
+![Preview](screen_ai.jpg)
