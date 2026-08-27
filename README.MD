@@ -1,8 +1,8 @@
-# vs_e_commerce6_ai
+# vs_ecommerce6_ai_github
 
-A full-stack e-commerce analytics dashboard with AI interaction — runnable locally or fully containerized with Docker.
+A full-stack e-commerce analytics dashboard with AI interaction — runnable locally only.
 
-This is a **Visual Studio Code** project built to practice modern full-stack development. It's an evolution of [e_commerce3](https://github.com/generateNscore/e_commerce3), now with support for both native execution and **Docker containerization**. This project is different from the previous in which a local AI agent without API key is added and no GPU required.
+This is a **Visual Studio Code** project built to practice modern full-stack development. As an evolution of [e_commerce3](https://github.com/generateNscore/e_commerce3), it now supports local execution. Unlike the previous version, this iteration integrates a local AI agent that operates without an API key and requires no GPU.
 
 Once you verify the project works, you can use it as a solid, working boilerplate and customize it however you want.
 
@@ -29,7 +29,8 @@ Once you verify the project works, you can use it as a solid, working boilerplat
 
 - [PyCharm](https://www.jetbrains.com/pycharm/) (or any Python IDE)
 - [PostgreSQL](https://www.postgresql.org/download/) installed locally (for native mode)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for containerized mode)
+- [Ollama]() installed locally (for native mode)
+- [qwen2.5-coder:7b]() model for ollama, installed locally (for native mode)
 - Python 3.10+
 
 ### ⚙️ Installation
@@ -59,7 +60,7 @@ Create a file named .env in the project root and add:
 DATABASE_URL=postgresql+psycopg2://postgres:{your_password}@localhost:5432/e_commerce_db
 OLLAMA_BASE_URL=http://localhost:11434/v1 # locally
 ```
-> Replace {your_password} with your local PostgreSQL password. This database e_commerce_db should be created in your local PostgreSQL.
+> Replace {your_password} with your local PostgreSQL password. This database e_commerce_db will be created in your local PostgreSQL automatically.
 
 2. Start the server
 
@@ -69,33 +70,6 @@ uvicorn app.main:app --reload
 
 When you see Application startup complete. in the logs, the server is ready on port 8000.
 
-### Option 2: Docker Mode (Containerized)
-
-1. Update your .env file
-
-Comment out the previous lines and replace it with:
-
-```env
-DATABASE_URL=postgresql+psycopg2://postgres:{your_password}@db:5432/db_docker
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD={your_password}
-POSTGRES_DB=db_docker
-OLLAMA_BASE_URL=http://ollama:11434/v1 # dockerized
-```
-
-> Replace {your_password} with the password you want to use.
-
-> Note: Even if the DB name is similar, the Dockerized database is fully isolated from your local PC. It runs inside the db container.
-
-2. Start with Docker Compose
-
-Make sure Docker Desktop is running, then run:
-
-```Bash
-docker compose up --build
-```
-
-When you see Application startup complete., the server is ready — also on port 8000.
 
 ## 🌐 Accessing the Application
 Once the server is running:
