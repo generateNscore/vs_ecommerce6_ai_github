@@ -1,0 +1,48 @@
+vs_e_commerce6_ai
+   ├─ .venv
+   ├─ app
+           ├─ data				: 생성할 데이터에 필요한 기초 자료들
+                    ├─ cities.py
+                    ├─ names.py
+                    └─ products.py
+           │
+           ├─ routers
+                    ├─ ai.py			: FastAPI endpoints for ai agent
+                    ├─ dashboard.py		: frontend와 통신할 endpoints
+                    └─ admin.py			: endpoint이며 데이터 생성/저장/분석 교통정리
+           │
+           ├─ services
+                    ├─ analytics.py		: 생성된 데이터 분석
+                    ├─ data_generator.py	: 가상 데이터를 생성
+                    ├─ data_loader.py		: 생성된 데이터를 db에 저장
+                    ├─ load_data_from_db.py		: db에 저장된 데이터 갖고오기
+                    └─ fake_data.py		: 생성할 가상 데이터의 구조
+           ├─ services_ai
+                    ├─ llm_clients.py		: QueryRequest.question -> sql query
+                    ├─ schema_generator.py		: models.py --> prompt, llm 호출 시 사용
+                    └─ sql_agent.py		: ai_agent를 사용되는 tools
+           │
+           ├─ static
+                    ├─ css (empty)
+                    └─ js
+                           └─ dashboard.js	: backend와 통신할 fetchs
+           │
+           ├─ templates
+                    └─ index.html		: frontend home page
+           │
+           ├─ config.py
+           ├─ database.py
+           ├─ dependencier.py
+           ├─ main.py
+           ├─ models.py
+           └─ schemas.py			: QueryRequest(), QueryResponse() for ai agent
+   │
+   ├─ .env
+   ├─ README.MD				: GitHub에 올릴 때 있으면 좋은 파일
+   ├─ screen.jpg					: README.MD에 추가할 frontend captured screen
+   ├─ requirements.txt				: 프로젝트에 설치된 library 목록 (pip freeze > requirements.txt --> pip install -r requirements.txt
+   └─ .gitignore					: GitHub에 올릴때 반드시 있어야 할 파일 (잊지 마세요!!!!)  .env를 GitHub에 올리지 않게 함!!!! 매우 중요.
+
+
+updated 2026.07.31
+

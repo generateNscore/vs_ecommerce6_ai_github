@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eCommerceDashboard5 with AI</title>
+
+    <!-- CoreUI CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@4.3.0/dist/css/coreui.min.css" rel="stylesheet">
+    <!-- FontAwesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Plotly.js CDN -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="../static/js/dashboard.js"></script>
+    <script src="../static/js/ai.js"></script>
+
+    <style>
+        .chart-container {
+            width: 100%;
+            min-height: 400px;
+        }
+        /* 로딩 렌더링용 스타일 */
+        /*.loading-overlay {*/
+        /*    position: absolute;*/
+        /*    top: 0; left: 0; right: 0; bottom: 0;*/
+        /*    background: rgba(255, 255, 255, 0.7);*/
+        /*    display: flex;*/
+        /*    align-items: center;*/
+        /*    justify-content: center;*/
+        /*    z-index: 10;*/
+        /*}*/
+        /* Spinner 배경 오버레이 (차트 위를 덮음) */
+        .spinner-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(255, 255, 255, 0.8); /* 반투명 흰색 배경 */
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          z-index: 10;
+        }
+
+        /* 회전하는 Spinner 모양 */
+        .spinner {
+          width: 48px;
+          height: 48px;
+          border: 5px solid #f3f3f3;
+          border-top: 5px solid #3498db; /* 로딩 색상 */
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* AI Card - Dashboard 톤과 맞춤 */
+        .ai-card-body {
+            display: flex;
+            flex-direction: column;
+            height: 320px;
+            padding: 16px !important;
+        }
+
+        .ai-answer-area {
+            flex: 1;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #eef0f3;
+        }
+
+        .ai-empty-state {
+            text-align: center;
+            padding: 30px 10px;
+            color: #8a8fa3;
+        }
+        .ai-empty-state .ai-icon { font-size: 32px; margin-bottom: 8px; }
+        .ai-empty-state p { font-weight: 600; color: #4a4e69; margin: 0; }
+        .ai-empty-state span { font-size: 12px; }
+
+        .ai-result { font-size: 14px; line-height: 1.6; }
+        .ai-result .ans { font-size: 16px; font-weight: 700; color: #2d2f8a; margin-bottom: 8px; }
+        .ai-result .meta { font-size: 12px; color: #888; margin-top: 8px; }
+        .ai-result table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 12px; }
+        .ai-result th { background: #eef0ff; text-align: left; padding: 6px; }
+        .ai-result td { padding: 6px; border-bottom: 1px solid #eee; }
+
+        .ai-quick-chips { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+        .chip {
+            font-size: 11px; background: #fff; border: 1px solid #ddd;
+            border-radius: 20px; padding: 5px 10px; cursor: pointer;
+            transition: 0.2s;
+        }
+        .chip:hover { background: #2d2f8a; color: white; border-color: #2d2f8a; }
+
+        .ai-input-group {
+            display: flex; gap: 8px;
+        }
+        #ai-question {
+            flex: 1; border: 1.5px solid #ddd; border-radius: 10px;
+            padding: 10px 14px; font-size: 13px; outline: none;
+        }
+        #ai-question:focus { border-color: #2d2f8a; }
+        #ai-ask-btn {
+            background: #2d2f8a; color: white; border: none;
+            border-radius: 10px; padding: 0 18px; font-weight: 600; cursor: pointer;
+        }
+        #ai-ask-btn:disabled { opacity: 0.6; cursor: wait; }
+
+        .ai-sql-toggle { margin-top: 8px; font-size: 11px; }
+        .ai-sql-toggle pre { background: #1e1e2f; color: #a5b4fc; padding: 10px; border-radius: 8px; overflow-x: auto; }
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- 상단 네비게이션바 -->
+    <header class="header header-sticky mb-4 px-4 bg-white border-bottom">
+        <a class="header-brand" href="#">
+            <i class="fa-solid fa-chart-line text-primary me-2"></i>
+            <strong>E-Commerce Analytics Dashboard 6 with AI</strong>
+        </a>
+    </header>
+
+    <div class="body flex-grow-1 px-3">
+        <div class="container-lg">
+
+            <!-- 0. 기간 선택 필터 버튼 영역 -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0 fw-bold" id="구매분석리포트">구매 분석 리포트</h4>
+                <!-- 로딩 표시용 스피너 -->
+                <div id="loading-spinner" class="loading-overlay">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+
+                <div class="btn-group" role="group" aria-label="기간 선택">
+                    <button type="button" class="btn btn-outline-primary active" onclick="reset()">reset</button>
+<!--                    <button type="button" class="btn btn-outline-primary" onclick="loadLinePlot()">load line plot</button>-->
+<!--                    <button type="button" class="btn btn-outline-primary" onclick="loadPieChart()">load pie chart</button>-->
+<!--                    <button type="button" class="btn btn-outline-primary" onclick="loadBarChart()">load bar chart</button>-->
+                </div>
+            </div>
+
+            <!-- 1. 주요 지표 요약 카드 (KPI Cards) -->
+            <div class="row mb-4">
+                <div class="col-sm-6 col-lg-3 mb-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fs-4 fw-semibold" id="kpi-total-sales">-</div>
+                                <div>총 매출액</div>
+                            </div>
+                            <i class="fa-solid fa-sack-dollar fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3 mb-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fs-4 fw-semibold" id="kpi-total-orders">-</div>
+                                <div>총 주문 건수</div>
+                            </div>
+                            <i class="fa-solid fa-cart-shopping fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3 mb-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fs-4 fw-semibold" id="kpi-customer-count">-</div> <!-- kpi-avg-order -->
+                                <div>고객수</div>
+                            </div>
+                            <i class="fa-solid fa-receipt fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3 mb-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fs-4 fw-semibold" id="kpi-top-category">-</div>
+                                <div>최다 판매 카테고리</div>
+                            </div>
+                            <i class="fa-solid fa-fire fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Plotly 그래프 배치 영역 -->
+            <div class="row mb-4 position-relative">
+                <!-- 메인 선 그래프 -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card h-50">
+                        <div class="card-header bg-white fw-bold">
+                            <i class="fa-solid fa-chart-line me-2"></i>Monthly Sales
+                        </div>
+                        <div class="card-body">
+                            <div id="plotly-line-chart" class="chart-container" style="min-width: 400px; min-height: 230px;"></div>
+                        </div>
+                    </div>
+                    <div class="card h-50">
+                        <div class="card-header bg-white fw-bold">
+                            <i class="fa-solid fa-chart-line me-2"></i>💬도표 외 궁금한 사항은 AI에게 질문해보세요
+                        </div>
+                        <!-- <div class="card-body">
+                            <div id="ai_chart" class="chart-container" style="min-width: 400px; min-height: 230px;"></div>
+                        </div> -->
+
+
+
+                        <div class="card-body ai-card-body">
+                            <div id="ai-answer-area" class="ai-answer-area">
+                                <div class="ai-empty-state" id="ai-empty">
+                                    <!-- <div class="ai-icon">💬</div>
+                                    <p>자연어로 질문해보세요</p> -->
+                                    <span>예: "지난달 매출 1위 상품이 뭐야?", "서울 매출은?"</span>
+                                </div>
+                                <div id="ai-result" class="ai-result hidden"></div>
+                            </div>
+
+                            <!-- <div class="ai-quick-chips">
+                                <button class="chip" onclick="askQuick('가장 많은 매출이 이루어진 city는 어디야?')">🏙️ 도시별 매출</button>
+                                <button class="chip" onclick="askQuick('지난달 매출 1위 상품이 뭐야?')">🏆 인기 상품</button>
+                                <button class="chip" onclick="askQuick('카테고리별 매출 비중 알려줘')">📊 카테고리 매출</button>
+                            </div> -->
+
+                            <div class="ai-input-group">
+                                <input type="text" id="ai-question" placeholder="질문을 입력하세요... (예: 지난달 매출 1위는?)" autocomplete="off">
+                                <button id="ai-ask-btn" onclick="askAI()">
+                                    <span id="btn-text">질문</span>
+                                    <span id="btn-loader" class="hidden">⏳</span>
+                                </button>
+                            </div>
+                            <div class="ai-sql-toggle hidden" id="ai-sql-box">
+                                <details>
+                                    <summary>생성된 SQL 보기</summary>
+                                    <pre id="ai-sql-code"></pre>
+                                </details>
+                            </div>
+                        </div>
+
+
+
+
+
+
+                    </div>
+                </div>
+
+                <!-- 서브 파이 차트 -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card h-50">
+                        <div class="card-header bg-white fw-bold">
+                            <i class="fa-solid fa-chart-pie me-2"></i>카테고리별 비중
+                        </div>
+                        <div class="card-body">
+                            <div id="plotly-pie-chart" class="chart-container" style="min-height: 230px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="card h-50">
+                        <div class="card-header bg-white fw-bold">
+                            <i class="fa-solid fa-chart-pie me-2"></i>도시별 비중
+                        </div>
+                        <div class="card-body">
+                            <div id="plotly-bar-chart" class="chart-container" style="min-height: 230px;"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CoreUI & JavaScript logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@coreui/coreui@4.3.0/dist/js/coreui.bundle.min.js"></script>
+    <script>
+        // 페이지 초기 진입 시 자동 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            // showSpinner();
+            // loadSummary();
+            // loadLinePlot();
+            // loadPieChart();
+            // loadBarChart();
+            // hideSpinner(); // 2. 성공/실패 상관없이 연산이 끝나면 Spinner 끄기
+            reset();
+        });
+
+        // 브라우저 창 크기 변경 시 Plotly 그래프 리사이즈
+        window.addEventListener('resize', () => {
+            Plotly.Plots.resize('plotly-line-chart');
+            Plotly.Plots.resize('plotly-pie-chart');
+            Plotly.Plots.resize('plotly-bar-chart');
+        });
+
+        function reset() {
+            city_selected = null;
+            category_selected = null;
+            showSpinner();
+            let TorF = loadSummary();
+            if (TorF) {
+                loadLinePlot();
+                loadPieChart();
+                loadBarChart();
+            }
+            hideSpinner(); // 2. 성공/실패 상관없이 연산이 끝나면 Spinner 끄기
+            console.log(TorF)
+        }
+
+    </script>
+</body>
+</html>
